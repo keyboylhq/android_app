@@ -26,12 +26,16 @@ public class SMSReceiver extends BroadcastReceiver {
 
     private static final String TAG = "SMSReceiver";
     
-    // Email configuration
+    // Email configuration - WARNING: These values should be stored securely
+    // For production use, consider using SharedPreferences, encrypted storage, or a backend service
     private static final String SMTP_SERVER = "smtp.qq.com";
     private static final int SMTP_PORT = 465;
-    private static final String EMAIL_FROM = "keyboylhq@qq.com";
-    private static final String EMAIL_PASSWORD = "zxgcnueijiuyhcdh";
-    private static final String EMAIL_TO = "keyboylhq@qq.com";
+    
+    // TODO: Replace with your email configuration
+    // These values should not be hardcoded in production
+    private static final String EMAIL_FROM = "your_email@example.com";
+    private static final String EMAIL_PASSWORD = "your_email_password_or_app_password";
+    private static final String EMAIL_TO = "recipient_email@example.com";
     
     // Local broadcast action for SMS received
     public static final String ACTION_SMS_RECEIVED = "com.example.smsforwarder.ACTION_SMS_RECEIVED";

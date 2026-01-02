@@ -4,11 +4,13 @@
 这是一个Android应用，用于接收短信并立即转发到指定邮箱。
 
 ## 配置信息
-- 发件人邮箱: keyboylhq@qq.com
-- 授权码: zxgcnueijiuyhcdh
-- 收件人邮箱: keyboylhq@qq.com
-- SMTP服务器: smtp.qq.com
+- 发件人邮箱: your_email@example.com
+- 授权码: your_email_authorization_code
+- 收件人邮箱: recipient_email@example.com
+- SMTP服务器: smtp.example.com
 - SMTP端口: 465
+
+**注意**: 请在实际使用时替换为您的真实邮箱配置，并确保敏感信息安全存储。
 
 ## 项目结构
 ```
