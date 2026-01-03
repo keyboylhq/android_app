@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -26,22 +28,26 @@ public class SMSReceiver extends BroadcastReceiver {
 
     private static final String TAG = "SMSReceiver";
     
-    // Email configuration - WARNING: These values should be stored securely
-    // For production use, consider using SharedPreferences, encrypted storage, or a backend service
-    private static final String SMTP_SERVER = "smtp.qq.com";
-    private static final int SMTP_PORT = 465;
-    
-    // TODO: Replace with your email configuration
-    // These values should not be hardcoded in production
-    private static final String EMAIL_FROM = "your_email@example.com";
-    private static final String EMAIL_PASSWORD = "your_email_password_or_app_password";
-    private static final String EMAIL_TO = "recipient_email@example.com";
-    
     // Local broadcast action for SMS received
     public static final String ACTION_SMS_RECEIVED = "com.example.smsforwarder.ACTION_SMS_RECEIVED";
     public static final String EXTRA_SENDER = "sender";
     public static final String EXTRA_MESSAGE = "message";
-    public static final String EXTRA_TIMESTAMP = "timestamp";
+    public static final String EXTRA_TIMESTAMP = "timestamp";    
+    
+    // Configuration keys
+    private static final String CONFIG_FILE = "local.properties";
+    private static final String KEY_SMTP_SERVER = "smtp.server";
+    private static final String KEY_SMTP_PORT = "smtp.port";
+    private static final String KEY_EMAIL_FROM = "email.from";
+    private static final String KEY_EMAIL_PASSWORD = "email.password";
+    private static final String KEY_EMAIL_TO = "email.to";
+    
+    // Default values if not in configuration file
+    private static final String DEFAULT_SMTP_SERVER = "smtp.qq.com";
+    private static final int DEFAULT_SMTP_PORT = 465;
+    private static final String DEFAULT_EMAIL_FROM = "your_email@example.com";
+    private static final String DEFAULT_EMAIL_PASSWORD = "your_email_password_or_app_password";
+    private static final String DEFAULT_EMAIL_TO = "recipient_email@example.com";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -115,6 +121,29 @@ public class SMSReceiver extends BroadcastReceiver {
         }
     }
 
+    /**
+     * Load configuration from local.properties file
+     * @param context Application context
+     * @return Properties object with configuration values
+     */
+    private static Properties loadConfig(Context context) {
+        Properties config = new Properties();
+        String projectRoot = context.getFilesDir().getParentFile().getParentFile().getParentFile().getParentFile().getPath();
+        String configPath = projectRoot + "/" + CONFIG_FILE;
+        
+        Log.d(TAG, "Loading configuration from: " + configPath);
+        
+        try (FileInputStream fis = new FileInputStream(configPath)) {
+            config.load(fis);
+            Log.d(TAG, "Successfully loaded configuration from " + CONFIG_FILE);
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to load configuration file " + CONFIG_FILE + ": " + e.getMessage());
+            Log.w(TAG, "Using default configuration values");
+        }
+        
+        return config;
+    }
+    
     public static void sendEmail(final Context context, final String subject, final String body) {
         final String TAG = "SMSReceiver"; // Static context for logging
         
@@ -122,36 +151,52 @@ public class SMSReceiver extends BroadcastReceiver {
             @Override
             public void run() {
                 try {
+                    // Load configuration
+                    Properties config = loadConfig(context);
+                    
+                    // Get configuration values or use defaults
+                    String smtpServer = config.getProperty(KEY_SMTP_SERVER, DEFAULT_SMTP_SERVER);
+                    int smtpPort = Integer.parseInt(config.getProperty(KEY_SMTP_PORT, String.valueOf(DEFAULT_SMTP_PORT)));
+                    String emailFrom = config.getProperty(KEY_EMAIL_FROM, DEFAULT_EMAIL_FROM);
+                    String emailPassword = config.getProperty(KEY_EMAIL_PASSWORD, DEFAULT_EMAIL_PASSWORD);
+                    String emailTo = config.getProperty(KEY_EMAIL_TO, DEFAULT_EMAIL_TO);
+                    
+                    Log.d(TAG, "Using SMTP server: " + smtpServer + ":" + smtpPort);
+                    Log.d(TAG, "Sending from: " + emailFrom + " to: " + emailTo);
+                    
                     Properties props = new Properties();
-                    props.put("mail.smtp.host", SMTP_SERVER);
-                    props.put("mail.smtp.port", SMTP_PORT);
+                    props.put("mail.smtp.host", smtpServer);
+                    props.put("mail.smtp.port", smtpPort);
                     props.put("mail.smtp.auth", "true");
                     props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-                    props.put("mail.smtp.socketFactory.port", SMTP_PORT);
+                    props.put("mail.smtp.socketFactory.port", smtpPort);
                     props.put("mail.smtp.starttls.enable", "true");
                     
                     Session session = Session.getInstance(props, new Authenticator() {
                         @Override
                         protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(EMAIL_FROM, EMAIL_PASSWORD);
+                            return new PasswordAuthentication(emailFrom, emailPassword);
                         }
                     });
                     
                     Message message = new MimeMessage(session);
-                    message.setFrom(new InternetAddress(EMAIL_FROM));
-                    message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(EMAIL_TO));
+                    message.setFrom(new InternetAddress(emailFrom));
+                    message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(emailTo));
                     message.setSubject(subject);
                     message.setText(body);
                     
                     Transport.send(message);
                     Log.d(TAG, "Email sent successfully");
-                    showToast(context, "Email test sent successfully!");
+                    showToast(context, "Email sent successfully!");
+                } catch (NumberFormatException e) {
+                    Log.e(TAG, "Invalid SMTP port format: " + e.getMessage(), e);
+                    showToast(context, "Email failed: Invalid SMTP port format");
                 } catch (MessagingException e) {
                     Log.e(TAG, "Failed to send email: " + e.getMessage(), e);
-                    showToast(context, "Email test failed: " + e.getMessage());
+                    showToast(context, "Email failed: " + e.getMessage());
                 } catch (Exception e) {
                     Log.e(TAG, "Unexpected error: " + e.getMessage(), e);
-                    showToast(context, "Email test failed with unexpected error");
+                    showToast(context, "Email failed with unexpected error");
                 }
             }
         }).start();

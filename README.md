@@ -4,13 +4,32 @@
 这是一个Android应用，用于接收短信并立即转发到指定邮箱。
 
 ## 配置信息
-- 发件人邮箱: your_email@example.com
-- 授权码: your_email_authorization_code
-- 收件人邮箱: recipient_email@example.com
-- SMTP服务器: smtp.example.com
-- SMTP端口: 465
 
-**注意**: 请在实际使用时替换为您的真实邮箱配置，并确保敏感信息安全存储。
+### 安全配置方式
+为了方便调试且不泄露敏感信息，本应用使用 `local.properties` 文件存储配置。该文件不会被Git跟踪，因此您可以安全地将敏感信息放在这里。
+
+### 配置步骤
+1. 复制配置模板文件：
+   ```bash
+   cp local.properties.template local.properties
+   ```
+2. 编辑 `local.properties` 文件，填写您的实际配置：
+   ```properties
+   # Email configuration
+   email.from=your_qq_email@qq.com          # 发件人邮箱
+   email.password=your_qq_email_app_password # 邮箱授权码（不是密码）
+   email.to=recipient_email@example.com      # 收件人邮箱
+   
+   # SMTP server configuration (default: QQ SMTP)
+   smtp.server=smtp.qq.com
+   smtp.port=465
+   ```
+
+### 重要说明
+- **QQ邮箱授权码获取**: 登录QQ邮箱 -> 设置 -> 账户 -> 开启POP3/SMTP服务 -> 获取授权码
+- **不使用真实密码**: 必须使用授权码，而不是QQ邮箱登录密码
+- **文件安全**: `local.properties` 文件已被添加到 `.gitignore`，不会被Git跟踪
+- **调试方便**: 可以直接修改配置文件，无需修改代码，重启应用即可生效
 
 ## 项目结构
 ```

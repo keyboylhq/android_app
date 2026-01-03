@@ -1,0 +1,11 @@
+# Local configuration file for SMS Forwarder app
+# Copy this file to local.properties and fill in your actual values
+
+# Email configuration
+email.from=your_qq_email@qq.com
+email.password=your_qq_email_app_password
+email.to=recipient_email@example.com
+
+# SMTP server configuration (default: QQ SMTP)
+smtp.server=smtp.qq.com
+smtp.port=465
